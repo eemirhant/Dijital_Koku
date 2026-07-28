@@ -1,0 +1,305 @@
+{
+  "_comment": "DijitalKoku PDM Konfigürasyonu V3.0 — Semantik-Olasılıksal Mimari",
+  "version": "3.0",
+  "_comment_v3": "V3: BayesFuser log-uzayı füzyon + KalmanFilterBank + VLM semantik kilit",
+  "module_weights": {
+    "_comment": "BayesFuser log-uzayı füzyon ağırlıkları — toplam 1.0 olmak zorunda değil",
+    "clip": 0.4,
+    "yolo": 0.3,
+    "kmeans": 0.15,
+    "texture": 0.1,
+    "vlm_bias": 0.05
+  },
+  "bayes": {
+    "_comment": "Bayes füzyon motoru parametreleri",
+    "prior_reset_on_scene_cut": true,
+    "flat_prior_value": 0.1429,
+    "log_space_fusion": true
+  },
+  "kalman_filters": {
+    "_comment": "Kanal başına Kalman Q (işlem gürültüsü) ve R (ölçüm gürültüsü)",
+    "Çam": {
+      "Q": 0.008,
+      "R": 0.12
+    },
+    "Deniz": {
+      "Q": 0.015,
+      "R": 0.08
+    },
+    "Vanilya": {
+      "Q": 0.01,
+      "R": 0.1
+    },
+    "İs/Duman": {
+      "Q": 0.025,
+      "R": 0.06
+    },
+    "Nane": {
+      "Q": 0.008,
+      "R": 0.15
+    },
+    "Toprak": {
+      "Q": 0.01,
+      "R": 0.12
+    },
+    "Limon": {
+      "Q": 0.012,
+      "R": 0.1
+    }
+  },
+  "vlm": {
+    "_comment": "Ollama VLM semantik kilit -- moondream yerel API",
+    "enabled": true,
+    "ollama_url": "http://localhost:11434",
+    "model": "moondream",
+    "interval_frames": 20,
+    "scene_cut_trigger": true,
+    "fallback_timeout_seconds": 10,
+    "max_retries": 2
+  },
+  "_scent_weights_DEPRECATED": "Bu bölüm artık kullanılmıyor. V3'te module_weights + BayesFuser kullanılır.",
+  "scent_weights": {
+    "Çam": {
+      "yolo": 0.4,
+      "kmeans": 0.45,
+      "texture": 0.15
+    },
+    "Deniz": {
+      "yolo": 0.35,
+      "kmeans": 0.5,
+      "texture": 0.15
+    },
+    "Vanilya": {
+      "yolo": 0.45,
+      "kmeans": 0.4,
+      "texture": 0.15
+    },
+    "İs/Duman": {
+      "yolo": 0.4,
+      "kmeans": 0.45,
+      "texture": 0.15
+    },
+    "Nane": {
+      "yolo": 0.4,
+      "kmeans": 0.45,
+      "texture": 0.15
+    },
+    "Toprak": {
+      "yolo": 0.4,
+      "kmeans": 0.4,
+      "texture": 0.2
+    },
+    "Limon": {
+      "yolo": 0.4,
+      "kmeans": 0.45,
+      "texture": 0.15
+    }
+  },
+  "hysteresis": {
+    "activate_threshold": 0.2,
+    "deactivate_threshold": 0.08,
+    "_comment_floor": "Histerezis aktif kanallar icin minimum Kalman skor garantisi (PWM floor) -- 0 devre disi",
+    "active_floor_score": 0.15,
+    "active_floor_scale": 1.0,
+    "terrestrial_dominance_threshold": 0.7,
+    "terrestrial_max_aquatic_ratio": 0.25,
+    "passive_decay_factor": 0.45
+  },
+  "temporal": {
+    "voting_window": 5,
+    "voting_threshold": 0.3
+  },
+  "clahe": {
+    "clip_limit": 2.0,
+    "tile_grid_size": [
+      8,
+      8
+    ]
+  },
+  "hardware": {
+    "_comment": "Seri port donanim parametreleri — dashboard.py / get_serial_command_8ch icinde kullanilir",
+    "back_flush_ms": 200,
+    "purge_ms": 500,
+    "min_change_threshold": 0.05,
+    "pwm_max": 4095,
+    "command_queue_size": 4,
+    "stale_command_ms": 300
+  },
+  "temporal_memory": {
+    "half_life_seconds": 2.0,
+    "max_objects": 30
+  },
+  "optical_flow": {
+    "water_horizontal_bonus": 0.25,
+    "smoke_upward_bonus": 0.2,
+    "static_suppression": 0.15,
+    "min_magnitude": 0.5,
+    "smoke_upward_threshold": 0.3
+  },
+  "purge_controller": {
+    "scene_cut_duration_s": 1.5,
+    "score_jump_threshold": 0.5,
+    "purge_channel_index": 7
+  },
+  "saturation_tracker": {
+    "window_seconds": 60.0,
+    "high_threshold": 0.7,
+    "min_output_ratio": 0.4,
+    "fade_rate": 0.008
+  },
+  "dynamic_roi": {
+    "focus_labels": [
+      "fire",
+      "car",
+      "truck",
+      "boat",
+      "fire hydrant",
+      "train"
+    ],
+    "fallback_center_ratio": 0.6
+  },
+  "color_veto": {
+    "_comment": "K-Means yüksek skor verdi ama YOLO desteklemiyorsa cezalandır",
+    "enabled": true,
+    "kmeans_dominant_threshold": 0.3,
+    "yolo_support_min": 0.05,
+    "min_blend_to_trigger": 0.12,
+    "penalty": 0.5,
+    "_comment2": "Formsuz ortam bypass: Deniz/Çam/Toprak için K-Means bu eşiği geçerse veto uygulanmaz",
+    "formless_bypass_threshold": 0.6,
+    "_comment3": "Normalizasyon tuzağı koruması: toplam bu değerin altındaysa zorla 1'e tamamlama",
+    "min_total_to_normalize": 0.25
+  },
+  "lighting_profile": {
+    "_comment": "HSV tabanlı aydınlatma profili eşikleri",
+    "night_v_threshold": 60.0,
+    "golden_h_low": 5.0,
+    "golden_h_high": 35.0,
+    "golden_s_min": 80.0,
+    "golden_ratio_min": 0.25,
+    "golden_mean_s_min": 60.0
+  },
+  "score_routing": {
+    "_comment": "Kural tabanli koku duzeltme ve taban garantileri",
+    "enabled": true,
+    "_comment_vehicle": "Arac tespitinde Is/Duman icin minimum taban skoru",
+    "is_duman_vehicle_floor": 0.15
+  },
+  "ovl": {
+    "_comment": "OVL Duyusal Hakem — RTX 3050 CUDA float16. model_id degistirilebilir.",
+    "enabled": true,
+    "model_id": "openai/clip-vit-base-patch32",
+    "hf_token": "",
+    "analysis_interval": 15,
+    "confidence_threshold": 0.7,
+    "_comment_thresholds": "Kural tabanli CLIP karar esikleri",
+    "forest_dominance_threshold": 0.6,
+    "forest_recalibration_factor": 0.8,
+    "min_sea_confidence_for_golden": 0.25
+  },
+  "dominance_hierarchy": {
+    "_comment": "Güçlü koku baskın olduğunda zayıf kokuları maskele",
+    "enabled": true,
+    "min_dominant_score": 0.22,
+    "min_dominant_power": 0.5,
+    "max_suppression": 0.45,
+    "_comment_coalition": "Doğa Koalisyonu: baskın koku doğa kokusu ise diğer doğa kokuları bu çarpanın altına inemez",
+    "nature_scents": [
+      "Çam",
+      "Toprak",
+      "Nane"
+    ],
+    "nature_coalition_suppress": 0.6
+  },
+  "vcv": {
+    "_comment": "Vektörel Bağlam Doğrulaması — _vector_context_decay ve _compute_context_axes parametreleri",
+    "lambda": 2.5,
+    "sky_freshness_weight": 0.08,
+    "context_axis_clip_weight": 0.95,
+    "context_axis_yolo_weight": 0.05,
+    "_comment_hardening": "Kentsel baskın sahne (urban>threshold) + doğa kokusu → lambda agresif artar",
+    "urban_hardening_threshold": 0.6,
+    "urban_hardening_scale": 5.0,
+    "_comment_boost": "Kentsel baskın sahne (urban>threshold) → İs/Duman taban bonus: urban_sig * bu değer",
+    "urban_is_duman_boost": 0.15,
+    "_comment_limon": "Limon Kuzey/Karasal Sertleştirme: Çam+Toprak+İs/Duman toplamı eşiği aşarsa Limon lambda çarpılır",
+    "limon_karasal_threshold": 0.45,
+    "limon_karasal_scale": 2.0,
+    "_comment_terr": "Karasal/Sucul ayrımı — CLIP terrestrial>eşik ise Deniz penalty artar",
+    "terrestrial_suppress_threshold": 0.6,
+    "terrestrial_suppress_scale": 4.0,
+    "aquatic_floor_multiplier": 0.3,
+    "_comment_is_terr": "Karasal İs/Duman yumuşatma — dağ/orman/kaya sahnede İs/Duman arka plana çekilir",
+    "is_terr_threshold": 0.55,
+    "is_terr_scale": 2.0,
+    "is_terr_max_penalty": 0.55,
+    "is_terr_green_ceil": 0.6,
+    "_comment_guard": "VCV Karasal Güvence Katmanı — K-Means yeşil baskınlıkta CLIP hatalı aquatic üretirse düzelti",
+    "min_terrestrial_guard": 0.65,
+    "max_aquatic_limit_on_green": 0.2,
+    "vcv_guard_green_h_low": 55.0,
+    "vcv_guard_green_h_high": 140.0,
+    "vcv_guard_green_s_min": 40.0
+  },
+  "clip": {
+    "_comment": "CLIP logit softmax sıcaklık parametresi — T<1 baskın skoru öne çıkarır, T>1 düzleştirir",
+    "temperature": 0.7
+  },
+  "texture_aquatic_filter": {
+    "_comment": "Yüksek Laplacian (orman/dağ/kayalık) → Deniz ham skorunu baskıla. 0 = devre dışı.",
+    "high_texture_threshold": 600.0,
+    "penalty": 0.1
+  },
+  "analyzer": {
+    "_comment": "Hareket ve sahne kesme algilama esikleri",
+    "motion_diff_threshold": 25,
+    "scene_cut_similarity_hard": 0.25,
+    "scene_cut_similarity_mixed": 0.35,
+    "scene_cut_motion_threshold": 0.35,
+    "scene_cut_similarity_low": 0.18
+  },
+  "context_rules": {
+    "vehicle_exhaust": {
+      "trigger_labels": [
+        "car",
+        "truck",
+        "bus",
+        "motorcycle"
+      ],
+      "color_condition": "orange_grey",
+      "override_scent": "İs/Duman",
+      "suppress_scents": [
+        "Vanilya",
+        "Limon"
+      ],
+      "override_strength": 0.6
+    },
+    "sea_vehicle": {
+      "trigger_labels": [
+        "boat"
+      ],
+      "color_condition": "blue_dominant",
+      "override_scent": "Deniz",
+      "suppress_scents": [
+        "Toprak",
+        "Vanilya"
+      ],
+      "override_strength": 0.5
+    },
+    "nature_scene": {
+      "trigger_labels": [
+        "bird",
+        "bear",
+        "zebra",
+        "giraffe",
+        "elephant"
+      ],
+      "color_condition": "green_dominant",
+      "override_scent": "Çam",
+      "suppress_scents": [
+        "Vanilya"
+      ],
+      "override_strength": 0.4
+    }
+  }
+}
